@@ -5,10 +5,13 @@
 
 {% block content %}
     <script><!--{% include 'radar/radar.Script.Txt' %}--></script>
-    <quad image="http://snorlax.de/radar.png" halign="center" valign="center" pos="0 0" z-index="0" size="30 30" />
 
-    {% for i in range(300) %}
-        <quad id="dot_{{i}}" bgcolor="00ff00ff" halign="center" valign="center" pos="0 0" z-index="1" size="1 1" />
-    {% endfor %}
+    <frame id="radarframe" pos="115 -70" z-index="1000">
+        <quad  ScriptEvents="1" id="radar" image="http://snorlax.de/radar.png?6.png" halign="center" valign="center" pos="0 0" z-index="0" size="30 30" />
 
+        {% for i in range(500) %}
+            <quad id="dot_{{i}}" bgcolor="ffffffff" halign="center" valign="center" pos="0 0" z-index="1" size="1 1" />
+        {% endfor %}
+
+    </frame>
 {% endblock %}

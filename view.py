@@ -8,8 +8,8 @@ import logging
 
 class RadarView(WidgetView):
     
-    widget_x = 40
-    widget_y = -45
+    widget_x = 0
+    widget_y = 0
 
     template_name = 'radar/radarwidget.xml'
 
@@ -18,7 +18,25 @@ class RadarView(WidgetView):
         self.app = app
         self.manager = app.context.ui
         self.id = 'pyplanet__widgets_radar'
+        self.paths = []
 
+    async def update_checkpoints(self, paths):
+        self.paths = []
+        for cps in paths.values():
+            cps = [s.replace("_", ",") for s in cps]
+            cps = ["<"+c+">" for c in cps]
+            self.paths.append(", ".join(cps))
+
+    async def get_context_data(self):
+        context = await super().get_context_data()
+
+        # Add facts.
+        context.update({
+            'num_checkpoints': self.app.instance.map_manager.current_map.num_checkpoints,
+            'paths': self.paths,
+        })
+
+        return context
 
 class EventInjection(TemplateView):
 

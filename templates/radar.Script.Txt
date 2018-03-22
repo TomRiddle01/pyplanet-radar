@@ -2,9 +2,45 @@
 #Include "TextLib" as TextLib
 #Include "MathLib" as MathLib
 
+declare Vec3[][] paths;
+
+declare Vec3 NoVec3;
 
 
+Vec3 GetCurrentCp(Vec3[] CollectedCps) {
+    if(CollectedCps.count != 0){
+        return CollectedCps[CollectedCps.count-1];
+    }
+    return NoVec3;
+}
 
+Vec3[] GetNextCp(Vec3 CurrentCp) {
+    log(CurrentCp);
+    declare Vec3[] NextCp;
+
+    declare take = 0;
+    if(CurrentCp == NoVec3){
+        take += 1;
+    }
+
+    foreach(path in paths){
+        declare i = 0;
+        foreach(cp in path){
+            if(take > 0){
+                if(!NextCp.exists(cp)){
+                    NextCp.add(cp);
+                }
+                take -= 1;
+                break;
+            }
+            if(CurrentCp == cp){
+                take = 1;
+            }
+            i+=1;
+        }
+    }
+    return NextCp;
+}
 
 Vec3 GetNearestWaypoint(Vec3 _PlayerPos) {
     declare Vec3 CheckpointPos;
@@ -14,23 +50,16 @@ Vec3 GetNearestWaypoint(Vec3 _PlayerPos) {
         Distances[Pos] = MathLib::Distance(_PlayerPos, Pos);
     }
 
-    // Finish lines are listed separately (includes StartFinish)
     foreach (Pos in MapFinishLinePos) {
         Distances[Pos] = MathLib::Distance(_PlayerPos, Pos);
     }
 
-    // Let's sort checkpoints by their distance to the player
     Distances = Distances.sort();
 
-    /**
-     *    We need to use foreach, since there's no other way
-     *    to get 1st element in array with custom key
-     */
     foreach (Pos => Distance in Distances) {
         return Pos;
     }
     
-    // This is required due how compilator and functions work
     return Vec3;
 }
 
@@ -39,12 +68,12 @@ Real Length(Vec2 v){
 }
 
 Vec2 TranslateToRadar(Vec3 to, CMlQuad Dot){
-    declare velFactor = GUIPlayer.Speed/45.0;
+    declare velFactor = GUIPlayer.Speed/30.0;
     velFactor = MathLib::Abs(velFactor);
     velFactor = MathLib::Max(1.0, velFactor);
-    velFactor = MathLib::Min(2.3, velFactor);
+    velFactor = MathLib::Min(2.8, velFactor);
 
-    declare zoom = 20*velFactor;
+    declare zoom = 30*velFactor;
     declare radius = 15.0*zoom;
     declare dir = <GUIPlayer.AimDirection.X, GUIPlayer.AimDirection.Z>;
     declare north = <0.0, 1.0>;
@@ -59,8 +88,7 @@ Vec2 TranslateToRadar(Vec3 to, CMlQuad Dot){
     }else{
         norm = pos;
     }
-    log(l);
-    Dot.Opacity = 1-MathLib::Min(l, 700.0)/700.0;
+    Dot.Opacity = 1-MathLib::Min(l, 2000.0)/2000.0;
 
     declare d = MathLib::Min(radius, l);
     return <-norm.X*d/zoom, norm.Y*d/zoom>;
@@ -68,16 +96,18 @@ Vec2 TranslateToRadar(Vec3 to, CMlQuad Dot){
 
 
 main() {
-    declare CMlLabel LabelLocalTime <=> (Page.GetFirstChild("warning") as CMlLabel);
-    declare CMlLabel EventId <=> (Page.GetFirstChild("mlid") as CMlLabel);
-    declare Text PrevTime = CurrentLocalDateText;
-    declare Vec3 NextCheckpoint;
-    declare Text FormattedCheckpoint;
-    declare Text FormattedCheckpointNb;
-
-
 
     declare persistent Vec3[] CollectedCps;
+    declare persistent Integer RadarPos;
+
+    NoVec3 = <992992.,929929.,39939.>;
+
+
+    {% for i in range(300) %}
+    {% for path in paths %}
+    paths.add([{{path|safe}}]);
+    {% endfor %}
+    {% endfor %}
 
     while (True) {
         yield;
@@ -87,7 +117,7 @@ main() {
         }
 
         if(GUIPlayer.CurRace.Checkpoints.count == 0) {
-            CollectedCps = [<900000.,0.,0.>];
+            CollectedCps = Vec3[];
         }
 
 
@@ -96,36 +126,50 @@ main() {
         }
 
 
-
-
-        for(i, 0, 299){
+        for(i, 0, 499){
             declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
             Dot.Opacity = 1.0;
             Dot.RelativeScale = 1.0;
             Dot.Hide();
+            Dot.BgColor = <1.,1.,1.>;
         }
 
         declare i = 0;
         foreach(Player in Players){
-            declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
-            declare pos = TranslateToRadar(Player.Position, Dot);
-            Dot.RelativePosition_V3 = pos;
-            Dot.BgColor = <0.,0.,1.>;
-            Dot.RelativeScale = 0.8;
-            Dot.Show();
-            i += 1;
+                declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
+                declare pos = TranslateToRadar(Player.Position, Dot);
+                Dot.RelativePosition_V3 = pos;
+                Dot.BgColor = <0.0, 0.45, 1.0>;
+                Dot.RelativeScale = 0.8;
+                Dot.Show();
+                i += 1;
+            if(Player != GUIPlayer){
+            }
         }
+
+
+        declare NextCp = GetNextCp(GetCurrentCp(CollectedCps));
 
         foreach (Checkpoint in MapCheckpointPos) {
             declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
             declare pos = TranslateToRadar(Checkpoint, Dot);
             Dot.RelativePosition_V3 = pos;
-            Dot.BgColor = <0.,1.,0.>;
+            Dot.BgColor = <0.5,0.5,0.5>;
             Dot.Show();
 
+            if(NextCp.exists(Checkpoint)){
+                if(NextCp.count > 1){
+                    Dot.BgColor = <1.,0.6,0.>;
+                }else{
+                    Dot.BgColor = <1.,1.,0.>;
+                }
+                Dot.RelativeScale = 1.3;
+                Dot.Opacity = 1.0;
+            }
             if(CollectedCps.exists(Checkpoint)){
+                Dot.BgColor = <0.5,0.5,1.0>;
                 Dot.Opacity *= 0.5;
-                Dot.RelativeScale = 0.5;
+                Dot.RelativeScale = 0.4;
             }
             i += 1;
         }
@@ -137,6 +181,11 @@ main() {
             Dot.BgColor = <1.,0.,0.>;
             Dot.Show();
 
+            if(CollectedCps.count == MapCheckpointPos.count){
+                Dot.RelativeScale = 1.3;
+                Dot.Opacity = 1.0;
+            }
+
             if(CollectedCps.exists(Checkpoint)){
                 Dot.Opacity *= 0.5;
                 Dot.RelativeScale = 0.5;
@@ -150,13 +199,31 @@ main() {
 
 
 
+        declare Vec3[] RadarSettings;
+        RadarSettings.add(<-33.0,-70.0, 1.2>); // left (left of time, behind chat)
+        RadarSettings.add(<0.0,-60.0, 1.0>); // centered (over time)
+        RadarSettings.add(<113.0,-70.0, 1.0>); // bottom right
+        RadarSettings.add(<105.0,70.0, 1.2>); // top right
+        //RadarSettings.add(<120.0,85.0, 0.3>); // top right (mini)
+
+        declare CMlFrame frame <=> (Page.GetFirstChild("radarframe") as CMlFrame);
+        frame.RelativePosition_V3.X = RadarSettings[RadarPos % RadarSettings.count].X;
+        frame.RelativePosition_V3.Y = RadarSettings[RadarPos % RadarSettings.count].Y;
+        frame.RelativeScale = RadarSettings[RadarPos % RadarSettings.count].Z;
 
 
+        foreach(Event in PendingEvents){
+            if(Event.Type == CMlScriptEvent::Type::MouseClick){
+                if(Event.ControlId == "radar"){
+                    RadarPos = (RadarPos+1) % RadarSettings.count;
+                }
+            }
+        }
 
         foreach (Event in RaceEvents) {
             if (Event.Type == CTmRaceClientEvent::EType::WayPoint){
                 if(Event.Player == InputPlayer){
-                    NextCheckpoint = GetNearestWaypoint(Event.Player.Position);
+                    declare Vec3 NextCheckpoint = GetNearestWaypoint(Event.Player.Position);
                     CollectedCps.add(NextCheckpoint);
 
 
