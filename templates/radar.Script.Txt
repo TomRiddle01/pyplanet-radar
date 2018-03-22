@@ -17,27 +17,38 @@ Vec3 GetCurrentCp(Vec3[] CollectedCps) {
 Vec3[] GetNextCp(Vec3 CurrentCp) {
     declare Vec3[] NextCp;
 
-    declare take = 0;
-    if(CurrentCp == NoVec3){
-        take += 1;
-    }
-
     foreach(path in paths){
-        declare i = 0;
-        foreach(cp in path){
-            if(take > 0){
-                if(!NextCp.exists(cp)){
-                    NextCp.add(cp);
-                }
-                take -= 1;
-                break;
+        declare i = GUIPlayer.CurRace.Checkpoints.count;
+        if(path.existskey(i)){
+            declare cp = path[i];
+            if(!NextCp.exists(cp)){
+                NextCp.add(cp);
             }
-            if(CurrentCp == cp){
-                take = 1;
-            }
-            i+=1;
         }
     }
+
+// Current Checkpoint dependent variant
+//    declare take = 0;
+//    if(CurrentCp == NoVec3){
+//        take += 1;
+//    }
+//
+//    foreach(path in paths){
+//        declare i = 0;
+//        foreach(cp in path){
+//            if(take > 0){
+//                if(!NextCp.exists(cp)){
+//                    NextCp.add(cp);
+//                }
+//                take -= 1;
+//                break;
+//            }
+//            if(CurrentCp == cp){
+//                take = 1;
+//            }
+//            i+=1;
+//        }
+//    }
     return NextCp;
 }
 
@@ -123,7 +134,6 @@ main() {
         //}
 
         declare Spectator = InputPlayer != GUIPlayer;
-        log(Spectator);
 
 
         for(i, 0, 499){
@@ -155,18 +165,20 @@ main() {
             Dot.RelativePosition_V3 = pos;
             Dot.BgColor = <0.5,0.5,0.5>;
             Dot.Show();
-            if(!Spectator){
-                declare NextCp = GetNextCp(GetCurrentCp(CollectedCps));
 
-                if(NextCp.exists(Checkpoint)){
-                    if(NextCp.count > 1){
-                        Dot.BgColor = <1.,0.6,0.>;
-                    }else{
-                        Dot.BgColor = <1.,1.,0.>;
-                    }
-                    Dot.RelativeScale = 1.3;
-                    Dot.Opacity = 1.0;
+            declare NextCp = GetNextCp(GetCurrentCp(CollectedCps));
+
+            if(NextCp.exists(Checkpoint)){
+                if(NextCp.count > 1){
+                    Dot.BgColor = <1.,0.6,0.>;
+                }else{
+                    Dot.BgColor = <1.,1.,0.>;
                 }
+                Dot.RelativeScale = 1.3;
+                Dot.Opacity = 1.0;
+            }
+
+            if(!Spectator){
                 if(CollectedCps.exists(Checkpoint)){
                     Dot.BgColor = <0.5,0.5,1.0>;
                     Dot.Opacity *= 0.5;
@@ -186,7 +198,7 @@ main() {
                 Dot.RelativeScale = 1.5;
                 Dot.Opacity = 1.0;
             }else{
-                Dot.RelativeScale = 0.8;
+                Dot.RelativeScale = 0.5;
             }
 
             if(CollectedCps.exists(Checkpoint)){
@@ -228,14 +240,6 @@ main() {
                 if(Event.Player == GUIPlayer){
                     declare Vec3 NextCheckpoint = GetNearestWaypoint(Event.Player.Position);
                     CollectedCps.add(NextCheckpoint);
-
-
-                    //FormattedCheckpoint = TextLib::ToText(NextCheckpoint.X)
-                    //                      ^"_"^TextLib::ToText(NextCheckpoint.Y)
-                    //                      ^"_"^TextLib::ToText(NextCheckpoint.Z);
-                    //FormattedCheckpointNb = TextLib::ToText(Event.CheckpointInRace);
-
-                    //TriggerPageAction("{{id}}__checkpoint__"^FormattedCheckpoint^"|"^FormattedCheckpointNb);
                 }
             }
         }
