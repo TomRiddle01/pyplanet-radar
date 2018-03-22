@@ -6,7 +6,7 @@
 {% block content %}
     <script><!--{% include 'radar/radar.Script.Txt' %}--></script>
 
-    <frame id="radarframe" pos="115 -70" z-index="1000">
+    <frame id="radarframe" pos="10000 10000" z-index="1000">
         <quad  ScriptEvents="1" id="radar" image="http://snorlax.de/radar.png?6.png" halign="center" valign="center" pos="0 0" z-index="0" size="30 30" />
 
         {% for i in range(500) %}

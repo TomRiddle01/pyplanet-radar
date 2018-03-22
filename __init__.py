@@ -35,6 +35,7 @@ class RadarApp(AppConfig):
     async def on_start(self):
         await super().on_start()
 
+        tm_signals.finish.register(self.on_finish)
         tm_signals.start_countdown.register(self.on_start_countdown)
         mp_signals.map.map_begin.register(self.on_map_begin)
 
@@ -50,8 +51,12 @@ class RadarApp(AppConfig):
 
     async def on_start_countdown(self, time, player, flow):
         # await self.update_paths();
-        await self.widget.display()
+        await self.widget.display(player=player)
         pass
+
+    async def on_finish(self, **kwargs):
+        await self.update_paths()
+        await self.widget.display()
 
     async def update_paths(self):
         paths = await CheckpointOrder.objects.execute(
