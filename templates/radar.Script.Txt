@@ -103,10 +103,8 @@ main() {
     NoVec3 = <992992.,929929.,39939.>;
 
 
-    {% for i in range(300) %}
     {% for path in paths %}
     paths.add([{{path|safe}}]);
-    {% endfor %}
     {% endfor %}
 
     while (True) {
