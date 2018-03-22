@@ -1,0 +1,174 @@
+//Script for generating a clock in the pyplanet interface
+#Include "TextLib" as TextLib
+#Include "MathLib" as MathLib
+
+
+
+
+
+Vec3 GetNearestWaypoint(Vec3 _PlayerPos) {
+    declare Vec3 CheckpointPos;
+    declare Real[Vec3] Distances;
+
+    foreach (Pos in MapCheckpointPos) {
+        Distances[Pos] = MathLib::Distance(_PlayerPos, Pos);
+    }
+
+    // Finish lines are listed separately (includes StartFinish)
+    foreach (Pos in MapFinishLinePos) {
+        Distances[Pos] = MathLib::Distance(_PlayerPos, Pos);
+    }
+
+    // Let's sort checkpoints by their distance to the player
+    Distances = Distances.sort();
+
+    /**
+     *    We need to use foreach, since there's no other way
+     *    to get 1st element in array with custom key
+     */
+    foreach (Pos => Distance in Distances) {
+        return Pos;
+    }
+    
+    // This is required due how compilator and functions work
+    return Vec3;
+}
+
+Real Length(Vec2 v){
+    return MathLib::Sqrt(v.X*v.X + v.Y*v.Y);
+}
+
+Vec2 TranslateToRadar(Vec3 to, CMlQuad Dot){
+    declare velFactor = GUIPlayer.Speed/45.0;
+    velFactor = MathLib::Abs(velFactor);
+    velFactor = MathLib::Max(1.0, velFactor);
+    velFactor = MathLib::Min(2.3, velFactor);
+
+    declare zoom = 20*velFactor;
+    declare radius = 15.0*zoom;
+    declare dir = <GUIPlayer.AimDirection.X, GUIPlayer.AimDirection.Z>;
+    declare north = <0.0, 1.0>;
+    declare a =  -(MathLib::Atan2(dir.Y, dir.X) - MathLib::Atan2(north.Y, north.X));
+    declare rel = to-GUIPlayer.Position;
+
+    declare pos = <rel.X*MathLib::Cos(a) - rel.Z*MathLib::Sin(a), rel.X*MathLib::Sin(a) + rel.Z*MathLib::Cos(a)>;
+    declare l = Length(pos);
+    declare Vec2 norm;
+    if(l != 0){
+        norm = <pos.X/l, pos.Y/l>;
+    }else{
+        norm = pos;
+    }
+    log(l);
+    Dot.Opacity = 1-MathLib::Min(l, 700.0)/700.0;
+
+    declare d = MathLib::Min(radius, l);
+    return <-norm.X*d/zoom, norm.Y*d/zoom>;
+}
+
+
+main() {
+    declare CMlLabel LabelLocalTime <=> (Page.GetFirstChild("warning") as CMlLabel);
+    declare CMlLabel EventId <=> (Page.GetFirstChild("mlid") as CMlLabel);
+    declare Text PrevTime = CurrentLocalDateText;
+    declare Vec3 NextCheckpoint;
+    declare Text FormattedCheckpoint;
+    declare Text FormattedCheckpointNb;
+
+
+
+    declare persistent Vec3[] CollectedCps;
+
+    while (True) {
+        yield;
+
+        if (!PageIsVisible || GUIPlayer == Null) {
+            continue;
+        }
+
+        if(GUIPlayer.CurRace.Checkpoints.count == 0) {
+            CollectedCps = [<900000.,0.,0.>];
+        }
+
+
+        if (!PageIsVisible || InputPlayer == Null) {
+            continue;
+        }
+
+
+
+
+        for(i, 0, 299){
+            declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
+            Dot.Opacity = 1.0;
+            Dot.RelativeScale = 1.0;
+            Dot.Hide();
+        }
+
+        declare i = 0;
+        foreach(Player in Players){
+            declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
+            declare pos = TranslateToRadar(Player.Position, Dot);
+            Dot.RelativePosition_V3 = pos;
+            Dot.BgColor = <0.,0.,1.>;
+            Dot.RelativeScale = 0.8;
+            Dot.Show();
+            i += 1;
+        }
+
+        foreach (Checkpoint in MapCheckpointPos) {
+            declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
+            declare pos = TranslateToRadar(Checkpoint, Dot);
+            Dot.RelativePosition_V3 = pos;
+            Dot.BgColor = <0.,1.,0.>;
+            Dot.Show();
+
+            if(CollectedCps.exists(Checkpoint)){
+                Dot.Opacity *= 0.5;
+                Dot.RelativeScale = 0.5;
+            }
+            i += 1;
+        }
+
+        foreach (Checkpoint in MapFinishLinePos) {
+            declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
+            declare pos = TranslateToRadar(Checkpoint, Dot);
+            Dot.RelativePosition_V3 = pos;
+            Dot.BgColor = <1.,0.,0.>;
+            Dot.Show();
+
+            if(CollectedCps.exists(Checkpoint)){
+                Dot.Opacity *= 0.5;
+                Dot.RelativeScale = 0.5;
+            }
+            i += 1;
+        }
+
+
+
+
+
+
+
+
+
+
+        foreach (Event in RaceEvents) {
+            if (Event.Type == CTmRaceClientEvent::EType::WayPoint){
+                if(Event.Player == InputPlayer){
+                    NextCheckpoint = GetNearestWaypoint(Event.Player.Position);
+                    CollectedCps.add(NextCheckpoint);
+
+
+                    //FormattedCheckpoint = TextLib::ToText(NextCheckpoint.X)
+                    //                      ^"_"^TextLib::ToText(NextCheckpoint.Y)
+                    //                      ^"_"^TextLib::ToText(NextCheckpoint.Z);
+                    //FormattedCheckpointNb = TextLib::ToText(Event.CheckpointInRace);
+
+                    //TriggerPageAction("{{id}}__checkpoint__"^FormattedCheckpoint^"|"^FormattedCheckpointNb);
+                }
+            }
+        }
+    }
+}
+

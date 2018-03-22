@@ -1,0 +1,14 @@
+{% extends 'core.views/generics/widget.xml' %}
+
+{% block maniascript %}
+{% endblock %}
+
+{% block content %}
+    <script><!--{% include 'radar/radar.Script.Txt' %}--></script>
+    <quad image="http://snorlax.de/radar.png" halign="center" valign="center" pos="0 0" z-index="0" size="30 30" />
+
+    {% for i in range(300) %}
+        <quad id="dot_{{i}}" bgcolor="00ff00ff" halign="center" valign="center" pos="0 0" z-index="1" size="1 1" />
+    {% endfor %}
+
+{% endblock %}
