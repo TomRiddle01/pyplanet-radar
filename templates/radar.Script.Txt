@@ -7,6 +7,7 @@ declare Vec3[][] paths;
 declare Vec3 NoVec3;
 
 
+
 Vec3 GetCurrentCp(Vec3[] CollectedCps) {
     if(CollectedCps.count != 0){
         return CollectedCps[CollectedCps.count-1];
@@ -14,41 +15,39 @@ Vec3 GetCurrentCp(Vec3[] CollectedCps) {
     return NoVec3;
 }
 
+
+declare Vec3 MemCurrentCp;
+declare Vec3[] MemNextCps;
+
 Vec3[] GetNextCp(Vec3 CurrentCp) {
     declare Vec3[] NextCp;
-
-//    foreach(path in paths){
-//        declare i = GUIPlayer.CurRace.Checkpoints.count;
-//        if(path.existskey(i)){
-//            declare cp = path[i];
-//            if(!NextCp.exists(cp)){
-//                NextCp.add(cp);
-//            }
-//        }
-//    }
-
-    //Current Checkpoint dependent variant
     declare take = 0;
 
-    if(CurrentCp == NoVec3){
-        take += 1;
-    }
-
-    foreach(path in paths){
-        declare i = 0;
-        foreach(cp in path){
-            if(take > 0){
-                if(!NextCp.exists(cp)){
-                    NextCp.add(cp);
-                }
-                take -= 1;
-                break;
-            }
-            if(CurrentCp == cp){
-                take = 1;
-            }
-            i+=1;
+    if(CurrentCp == MemCurrentCp){
+        return MemNextCps;
+    }else{
+        if(CurrentCp == NoVec3){
+            take += 1;
         }
+
+        foreach(path in paths){
+            declare i = 0;
+            foreach(cp in path){
+                if(take > 0){
+                    if(!NextCp.exists(cp)){
+                        NextCp.add(cp);
+                    }
+                    take -= 1;
+                    break;
+                }
+                if(CurrentCp == cp){
+                    take = 1;
+                }
+                i+=1;
+            }
+        }
+        MemCurrentCp = CurrentCp;
+        MemNextCps = NextCp;
     }
 
     return NextCp;

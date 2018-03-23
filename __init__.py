@@ -67,7 +67,8 @@ class RadarApp(AppConfig):
         map_checkpoints = self.instance.map_manager.current_map.num_checkpoints
 
         finished_paths = {}
-        for entry in list(paths):
+
+        for entry in list(paths)[:30]:
             cps = entry.checkpoints.split("|")
             if map_checkpoints == len(cps):
                 finished_paths[entry.player.login] = cps
