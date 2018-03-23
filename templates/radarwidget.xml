@@ -9,7 +9,9 @@
     <frame id="radarframe" pos="10000 10000" z-index="1000">
         <quad  ScriptEvents="1" id="radar" image="http://snorlax.de/radar.png?6.png" halign="center" valign="center" pos="0 0" z-index="0" size="30 30" />
 
-        {% for i in range(500) %}
+        <label id="unknwon_order" visibility="hidden" halign="center" valign="center" pos="0 17" textsize="0.3" text="$o$s$f50Unknown checkpoint order!" />
+
+        {% for i in range(100) %}
             <quad id="dot_{{i}}" bgcolor="ffffffff" halign="center" valign="center" pos="0 0" z-index="1" size="1 1" />
         {% endfor %}
 

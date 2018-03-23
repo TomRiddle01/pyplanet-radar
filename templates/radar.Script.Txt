@@ -109,18 +109,44 @@ Vec2 TranslateToRadar(Vec3 to, CMlQuad Dot){
 
 main() {
 
+    declare UpdateInterval = 20;
+
+    declare Vec3[] RadarSettings;
+    RadarSettings.add(<-33.0,-70.0, 1.2>); // left (left of time, behind chat)
+    RadarSettings.add(<0.0,-60.0, 1.0>); // centered (over time)
+    RadarSettings.add(<113.0,-70.0, 1.0>); // bottom right
+    RadarSettings.add(<105.0,68.0, 1.2>); // top right
+
+    RadarSettings.add(<120.0,85.0, 0.3>); // top right (mini)
+
+
+
+
+
     declare persistent Vec3[] CollectedCps;
     declare persistent Integer RadarPos;
-
     NoVec3 = <992992.,929929.,39939.>;
+
+    declare CMlLabel UnknownOrderLabel <=> (Page.GetFirstChild("unknwon_order") as CMlLabel);
+
 
 
     {% for path in paths %}
     paths.add([{{path|safe}}]);
     {% endfor %}
 
+    declare NextUpdate = CurrentTime-1;
     while (True) {
         yield;
+
+        foreach(Event in PendingEvents){
+            if(Event.Type == CMlScriptEvent::Type::MouseClick){
+                if(Event.ControlId == "radar"){
+                    RadarPos = (RadarPos+1) % RadarSettings.count;
+                    NextUpdate = CurrentTime-1;
+                }
+            }
+        }
 
         if (!PageIsVisible || GUIPlayer == Null) {
             continue;
@@ -130,118 +156,108 @@ main() {
             CollectedCps = Vec3[];
         }
 
-
-        //if (!PageIsVisible || InputPlayer == Null) {
-        //    continue;
-        //}
-
-        declare Spectator = InputPlayer != GUIPlayer;
-
-
-        for(i, 0, 499){
-            declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
-            Dot.Opacity = 1.0;
-            Dot.RelativeScale = 1.0;
-            Dot.Hide();
-            Dot.BgColor = <1.,1.,1.>;
-        }
-
-        declare i = 0;
-        foreach(Player in Players){
-            if(Player != GUIPlayer){
-                declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
-                declare pos = TranslateToRadar(Player.Position, Dot);
-                Dot.RelativePosition_V3 = pos;
-                Dot.BgColor = <0.0, 0.45, 1.0>;
-                Dot.RelativeScale = 0.8;
-                Dot.Show();
-                i += 1;
-            }
-        }
-
-
-
-        foreach (Checkpoint in MapCheckpointPos) {
-            declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
-            declare pos = TranslateToRadar(Checkpoint, Dot);
-            Dot.RelativePosition_V3 = pos;
-            Dot.BgColor = <0.5,0.5,0.5>;
-            Dot.Show();
-
-            if(!Spectator){
-                declare NextCp = GetNextCp(GetCurrentCp(CollectedCps));
-
-                if(NextCp.exists(Checkpoint)){
-                    if(NextCp.count > 1){
-                        Dot.BgColor = <1.,0.6,0.>;
-                    }else{
-                        Dot.BgColor = <1.,1.,0.>;
-                    }
-                    Dot.RelativeScale = 1.3;
-                    Dot.Opacity = 1.0;
-                }
-
-                if(CollectedCps.exists(Checkpoint)){
-                    Dot.BgColor = <0.5,0.5,1.0>;
-                    Dot.Opacity *= 0.5;
-                    Dot.RelativeScale = 0.4;
-                }
-            }
-            i += 1;
-        }
-
-        foreach (Checkpoint in MapFinishLinePos) {
-            declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
-            declare pos = TranslateToRadar(Checkpoint, Dot);
-            Dot.RelativePosition_V3 = pos;
-            Dot.BgColor = <1.,0.,0.>;
-            Dot.Show();
-            if(GUIPlayer.CurRace.Checkpoints.count == MapCheckpointPos.count){
-                Dot.RelativeScale = 1.5;
-                Dot.Opacity = 1.0;
-            }else{
-                Dot.RelativeScale = 0.5;
-            }
-
-            if(CollectedCps.exists(Checkpoint)){
-                Dot.Opacity *= 0.5;
-                Dot.RelativeScale = 0.5;
-            }
-            i += 1;
-        }
-
-
-
-
-
-
-
-        declare Vec3[] RadarSettings;
-        RadarSettings.add(<-33.0,-70.0, 1.2>); // left (left of time, behind chat)
-        RadarSettings.add(<0.0,-60.0, 1.0>); // centered (over time)
-        RadarSettings.add(<113.0,-70.0, 1.0>); // bottom right
-        RadarSettings.add(<105.0,70.0, 1.2>); // top right
-        //RadarSettings.add(<120.0,85.0, 0.3>); // top right (mini)
-
-        declare CMlFrame frame <=> (Page.GetFirstChild("radarframe") as CMlFrame);
-        frame.RelativePosition_V3.X = RadarSettings[RadarPos % RadarSettings.count].X;
-        frame.RelativePosition_V3.Y = RadarSettings[RadarPos % RadarSettings.count].Y;
-        frame.RelativeScale = RadarSettings[RadarPos % RadarSettings.count].Z;
-
-
-        foreach(Event in PendingEvents){
-            if(Event.Type == CMlScriptEvent::Type::MouseClick){
-                if(Event.ControlId == "radar"){
-                    RadarPos = (RadarPos+1) % RadarSettings.count;
-                }
-            }
-        }
-
         foreach (Event in RaceEvents) {
             if (Event.Type == CTmRaceClientEvent::EType::WayPoint){
                 if(Event.Player == GUIPlayer){
                     declare Vec3 NextCheckpoint = GetNearestWaypoint(Event.Player.Position);
                     CollectedCps.add(NextCheckpoint);
+                }
+            }
+        }
+
+        if(CurrentTime>NextUpdate){
+            NextUpdate = CurrentTime + UpdateInterval;
+
+            declare Spectator = InputPlayer != GUIPlayer;
+
+
+            // Radar Positions
+            declare CMlFrame frame <=> (Page.GetFirstChild("radarframe") as CMlFrame);
+            frame.RelativePosition_V3.X = RadarSettings[RadarPos % RadarSettings.count].X;
+            frame.RelativePosition_V3.Y = RadarSettings[RadarPos % RadarSettings.count].Y;
+            frame.RelativeScale = RadarSettings[RadarPos % RadarSettings.count].Z;
+
+            if(RadarPos != RadarSettings.count-1){ // disable if its the last setting
+                // Dot Stuff
+                declare MaxElement = 100-1;
+                for(i, 0, MaxElement){
+                    declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
+                    Dot.Opacity = 1.0;
+                    Dot.RelativeScale = 1.0;
+                    Dot.Hide();
+                    Dot.BgColor = <1.,1.,1.>;
+                }
+
+
+                declare i = 0;
+                foreach(Player in Players){
+                    if(i > MaxElement) break;
+                    if(Player != GUIPlayer){
+                        declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
+                        declare pos = TranslateToRadar(Player.Position, Dot);
+                        Dot.RelativePosition_V3 = pos;
+                        Dot.BgColor = <0.0, 0.45, 1.0>;
+                        Dot.RelativeScale = 0.8;
+                        Dot.Show();
+                        i += 1;
+                    }
+                }
+
+
+
+                foreach (Checkpoint in MapCheckpointPos) {
+                    if(i > MaxElement) break;
+                    declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
+                    declare pos = TranslateToRadar(Checkpoint, Dot);
+                    Dot.RelativePosition_V3 = pos;
+                    Dot.BgColor = <0.5,0.5,0.5>;
+                    Dot.Show();
+
+                    if(!Spectator){
+                        declare NextCp = GetNextCp(GetCurrentCp(CollectedCps));
+                        if(NextCp.count > 1){
+                            UnknownOrderLabel.Show();
+                        }else{
+                            UnknownOrderLabel.Hide();
+                        }
+                        if(NextCp.exists(Checkpoint)){
+                            if(NextCp.count > 1){
+                                Dot.BgColor = <1.,0.6,0.>;
+                            }else{
+                                Dot.BgColor = <1.,1.,0.>;
+                            }
+                            Dot.RelativeScale = 1.3;
+                            Dot.Opacity = 1.0;
+                        }
+
+                        if(CollectedCps.exists(Checkpoint)){
+                            Dot.BgColor = <0.5,0.5,1.0>;
+                            Dot.Opacity *= 0.5;
+                            Dot.RelativeScale = 0.4;
+                        }
+                    }
+                    i += 1;
+                }
+
+                foreach (Checkpoint in MapFinishLinePos) {
+                    if(i > MaxElement) break;
+                    declare CMlQuad Dot <=> (Page.GetFirstChild("dot_"^i) as CMlQuad);
+                    declare pos = TranslateToRadar(Checkpoint, Dot);
+                    Dot.RelativePosition_V3 = pos;
+                    Dot.BgColor = <1.,0.,0.>;
+                    Dot.Show();
+                    if(GUIPlayer.CurRace.Checkpoints.count == MapCheckpointPos.count){
+                        Dot.RelativeScale = 1.5;
+                        Dot.Opacity = 1.0;
+                    }else{
+                        Dot.RelativeScale = 0.5;
+                    }
+
+                    if(CollectedCps.exists(Checkpoint)){
+                        Dot.Opacity *= 0.5;
+                        Dot.RelativeScale = 0.5;
+                    }
+                    i += 1;
                 }
             }
         }
