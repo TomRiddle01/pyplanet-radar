@@ -27,7 +27,7 @@ Vec3[] GetNextCp(Vec3 CurrentCp) {
 //        }
 //    }
 
-    Current Checkpoint dependent variant
+    //Current Checkpoint dependent variant
     declare take = 0;
 
     if(CurrentCp == NoVec3){
