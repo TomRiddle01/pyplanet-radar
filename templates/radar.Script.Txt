@@ -126,7 +126,8 @@ main() {
     declare persistent Integer RadarPos;
     NoVec3 = <992992.,929929.,39939.>;
 
-    declare CMlLabel UnknownOrderLabel <=> (Page.GetFirstChild("unknwon_order") as CMlLabel);
+    declare CMlLabel Message <=> (Page.GetFirstChild("message") as CMlLabel);
+    declare CMlFrame Legend <=> (Page.GetFirstChild("legend") as CMlFrame);
 
 
 
@@ -139,6 +140,16 @@ main() {
         yield;
 
         foreach(Event in PendingEvents){
+            if(Event.Type == CMlScriptEvent::Type::MouseOver){
+                if(Event.ControlId == "radar"){
+                    Legend.RelativePosition_V3 = <0.0, 0.0>;
+                }
+            }
+            if(Event.Type == CMlScriptEvent::Type::MouseOut){
+                if(Event.ControlId == "radar"){
+                    Legend.RelativePosition_V3 = <90000.0, 90000.0>;
+                }
+            }
             if(Event.Type == CMlScriptEvent::Type::MouseClick){
                 if(Event.ControlId == "radar"){
                     RadarPos = (RadarPos+1) % RadarSettings.count;
@@ -175,6 +186,10 @@ main() {
             frame.RelativePosition_V3.X = RadarSettings[RadarPos % RadarSettings.count].X;
             frame.RelativePosition_V3.Y = RadarSettings[RadarPos % RadarSettings.count].Y;
             frame.RelativeScale = RadarSettings[RadarPos % RadarSettings.count].Z;
+
+            Message.Hide();
+            Message.SetText("");
+            Legend.Hide();
 
             if(RadarPos != RadarSettings.count-1){ // disable if its the last setting
                 // Dot Stuff
@@ -215,10 +230,10 @@ main() {
                     if(!Spectator){
                         declare NextCp = GetNextCp(GetCurrentCp(CollectedCps));
                         if(NextCp.count > 1){
-                            UnknownOrderLabel.Show();
-                        }else{
-                            UnknownOrderLabel.Hide();
+                            Message.SetText("$o$s$f50Unknown checkpoint order!");
+                            Message.Show();
                         }
+
                         if(NextCp.exists(Checkpoint)){
                             if(NextCp.count > 1){
                                 Dot.BgColor = <1.,0.6,0.>;
@@ -246,6 +261,8 @@ main() {
                     Dot.BgColor = <1.,0.,0.>;
                     Dot.Show();
                     if(GUIPlayer.CurRace.Checkpoints.count == MapCheckpointPos.count){
+                        Message.SetText("$o$s$fffFinish now!");
+                        Message.Show();
                         Dot.RelativeScale = 1.5;
                         Dot.Opacity = 1.0;
                     }else{
@@ -257,6 +274,11 @@ main() {
                         Dot.RelativeScale = 0.5;
                     }
                     i += 1;
+                }
+
+
+                if(GUIPlayer.CurRace.Checkpoints.count == 0){
+                    Legend.Show();
                 }
             }
         }

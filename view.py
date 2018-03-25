@@ -38,6 +38,7 @@ class RadarView(WidgetView):
 
         return context
 
+
 class EventInjection(TemplateView):
 
     template_name = 'radar/event_injection.xml'

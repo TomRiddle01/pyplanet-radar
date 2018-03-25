@@ -10,23 +10,16 @@ Vec3 GetNearestWaypoint(Vec3 _PlayerPos) {
         Distances[Pos] = MathLib::Distance(_PlayerPos, Pos);
     }
 
-    // Finish lines are listed separately (includes StartFinish)
     foreach (Pos in MapFinishLinePos) {
         Distances[Pos] = MathLib::Distance(_PlayerPos, Pos);
     }
 
-    // Let's sort checkpoints by their distance to the player
     Distances = Distances.sort();
 
-    /**
-     *    We need to use foreach, since there's no other way
-     *    to get 1st element in array with custom key
-     */
     foreach (Pos => Distance in Distances) {
         return Pos;
     }
     
-    // This is required due how compilator and functions work
     return Vec3;
 }
 

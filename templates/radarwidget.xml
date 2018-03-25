@@ -7,9 +7,32 @@
     <script><!--{% include 'radar/radar.Script.Txt' %}--></script>
 
     <frame id="radarframe" pos="10000 10000" z-index="1000">
+        <frame pos="-10 17" z-index="10">
+            <frame pos="10000 10000" id="legend">
+                <quad pos="0 2" z-index="0" size="20 15" bgcolor="000000dd"/>
+
+                <label pos="1 0" z-index="1" halign="left" valign="center" text="Radar Legend:" textsize="0.1" />
+
+                <quad pos="2 -3" z-index="1" bgcolor="888888ff" halign="right" valign="center" size="1 1" />
+                <label pos="3 -3" z-index="1" halign="left" valign="center" text="checkpoint" textsize="0.1" />
+
+                <quad pos="2 -5" z-index="1" bgcolor="ffff00ff" halign="right" valign="center" size="1 1" />
+                <label pos="3 -5" z-index="1" halign="left" valign="center" text="next checkpoint" textsize="0.1" />
+
+                <quad pos="2 -7" z-index="1" bgcolor="ff7700ff" halign="right" valign="center" size="1 1" />
+                <label pos="3 -7" z-index="1" halign="left" valign="center" text="maybe next cp" textsize="0.1" />
+
+                <quad pos="2 -9" z-index="1" bgcolor="ff0000ff" halign="right" valign="center" size="1 1" />
+                <label pos="3 -9" z-index="1" halign="left" valign="center" text="finish" textsize="0.1" />
+
+                <quad pos="2 -11" z-index="1" bgcolor="0000ffff" halign="right" valign="center" size="1 1" />
+                <label pos="3 -11" z-index="1" halign="left" valign="center" text="next player" textsize="0.1" />
+            </frame>
+        </frame>
+
         <quad  ScriptEvents="1" id="radar" image="http://snorlax.de/radar.png?6.png" halign="center" valign="center" pos="0 0" z-index="0" size="30 30" />
 
-        <label id="unknwon_order" visibility="hidden" halign="center" valign="center" pos="0 17" textsize="0.3" text="$o$s$f50Unknown checkpoint order!" />
+        <label id="message" visibility="hidden" halign="center" valign="center" pos="0 17" textsize="0.3" text="" />
 
         {% for i in range(100) %}
             <quad id="dot_{{i}}" bgcolor="ffffffff" halign="center" valign="center" pos="0 0" z-index="1" size="1 1" />
